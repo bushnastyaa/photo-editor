@@ -131,6 +131,24 @@ function updateValueOfInput(value, wrap) {
     filterSlider.value = value;
 };
 
+function resetFilter() {
+    const active = 'preset--active';
+
+    ranges.forEach(range => {
+        const input = range.querySelector(".filter-slider");
+        const value = input.getAttribute("value");
+
+        updateFilterValue(value / 100, range);
+        updateValueOfInput(value, range);
+        removeClass(presets, active);
+	    updateFill(value, range);
+	    document.documentElement.removeAttribute ('style');
+    })
+
+    rotate.rotate = 0, rotate.flipHorizontal = 1, rotate.flipVertical = 1;
+    applyFilters();
+};
+
 function initPresets() {
     const active = "preset--active";
 
@@ -191,9 +209,50 @@ function updateImages (src) {
 	images.forEach(image => image.src = src);
 };
 
+function downloadImage() {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+
+    canvas.width = previewImg.naturalWidth;
+    canvas.height = previewImg.naturalHeight;
+
+    setFiltersToCanvas(ctx, canvas)
+    downloadCanvas(canvas)
+};
+
+function setFiltersToCanvas(ctx, canvas) {
+    let canvasFilters = "";
+	for (let i in filters) {
+		canvasFilters += `${i}(${filters[i]})`;
+	}
+
+	ctx.filter = canvasFilters; 
+
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    if (rotate.rotate !== 0) {
+        ctx.rotate(rotate.rotate * Math.PI / 180);
+    }
+    ctx.scale(rotate.flipHorizontal, rotate.flipVertical);
+
+    ctx.drawImage(previewImg, -canvas.width / 2, -canvas.height / 2, canvas.width, canvas.height);
+};
+
+function downloadCanvas(canvas) {
+    const link = document.createElement("a");
+    link.download = "image.jpg";
+    link.href = canvas.toDataURL();
+    link.click();
+    link.delete;
+};
+
 rangeInit();
 
 fileInput.addEventListener("change", uploadButton);
 chooseImgBtn.addEventListener("click", () => fileInput.click());
 
+rotateImage();
+
 initPresets();
+
+resetFilterBtn.addEventListener("click", resetFilter);
+saveImgBtn.addEventListener("click", downloadImage);
