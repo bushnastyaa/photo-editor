@@ -1,7 +1,42 @@
 const fileInput = document.querySelector(".file-input"),
 ranges = document.querySelectorAll('.range'),
+rotateOptions = document.querySelectorAll(".rotate-btn"),
+resetFilterBtn = document.querySelector(".reset-filter"),
 previewImg = document.querySelector(".preview-img img"),
-chooseImgBtn = document.querySelector(".choose-img");
+presets = document.querySelectorAll('.preset'),
+chooseImgBtn = document.querySelector(".choose-img"),
+saveImgBtn = document.querySelector(".save-img");
+
+const setupPresets = {
+	1: {
+		'brightness': 9,
+	    'invert': 0,
+	    'contrast': 12,
+	    'saturate': 22,
+	    'grayscale': 20
+	},
+	2: {
+		'brightness': 11,
+	    'invert': 17,
+	    'contrast': 17,
+	    'saturate': 2,
+	    'grayscale': 25
+	},
+	3: {
+		'brightness': 12,
+	    'invert': 5,
+	    'contrast': 12,
+	    'saturate': 19,
+	    'grayscale': 0
+	},
+	4: {
+		'brightness': 12,
+	    'invert': 9,
+	    'contrast': 16,
+	    'saturate': 0,
+	    'grayscale': 25
+	},
+};
 
 const filters = {
 	'brightness': 1,
@@ -73,6 +108,71 @@ function setFilter(style, value) {
     applyFilters(style)
 };
 
+function rotateImage() {
+    rotateOptions.forEach(option => {
+        option.addEventListener("click", () => {
+            if (option.id === "left") {
+                rotate.rotate -= 90;
+            } else if (option.id === "right") {
+                rotate.rotate += 90;
+            } else if (option.id === "horizontal") {
+                rotate.flipHorizontal = rotate.flipHorizontal === 1 ? -1 : 1;
+            } else {
+                rotate.flipVertical = rotate.flipVertical === 1 ? -1 : 1;
+            }
+    
+            applyFilters();
+        });
+    });
+};
+
+function updateValueOfInput(value, wrap) {
+    const filterSlider = wrap.querySelector(".filter-slider");
+    filterSlider.value = value;
+};
+
+function initPresets() {
+    const active = "preset--active";
+
+    presets.forEach(preset => {
+        preset.addEventListener("click", () => {
+            if (!preset.classList.contains(active)) {
+                removeClass(presets, active);
+                setPreset(preset);
+                preset.classList.toggle(active);
+            } else {
+                removeClass(presets, active);
+                resetFilter();
+            }
+        })
+    });
+};
+
+function setPreset(preset) {
+    const index = preset.dataset.preset;
+    const setup = setupPresets[index];
+
+    if (setup) {
+        for (let style in setup) {
+            const value = +setup[`${style}`] / 100;
+            setFilter(style, value);
+            applyFilters(style);
+
+            ranges.forEach(item => {
+                if (item.dataset.range === style) {
+                    updateFilterValue(value, item);
+                    updateFill(value * 100, item);
+                    updateValueOfInput(value * 100,item);
+                }
+            })
+        }
+    };
+};
+
+function removeClass(items, active) {
+	items.forEach(item => item.classList.remove(active));
+};
+
 function uploadButton() {
     let file = fileInput.files[0];
     if(!file) return; 
@@ -96,3 +196,4 @@ rangeInit();
 fileInput.addEventListener("change", uploadButton);
 chooseImgBtn.addEventListener("click", () => fileInput.click());
 
+initPresets();
